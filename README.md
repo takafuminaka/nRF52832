@@ -1,0 +1,2 @@
+# nRF52832
+My nRF52832 works
