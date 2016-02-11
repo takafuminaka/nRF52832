@@ -3,7 +3,7 @@
  * Auto generated Run-Time-Environment Component Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'i2s_pca10040' 
+ * Project: 'i2s_ws2812b' 
  * Target:  'nrf52832_xxaa' 
  */
 
