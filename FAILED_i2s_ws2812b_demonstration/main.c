@@ -29,6 +29,34 @@
 #include "boards.h"
 #include "app_uart.h"
 
+#include	"flashing_random.h"
+#include	"running_rainbow.h"
+#include	"running_rainbowv.h"
+
+#include "ws2812b_driver.h"
+#include "project.h"
+
+////// Define of demos :start /////
+typedef struct
+{
+	void (*function_init)();
+	void (*function_update)(rgb_led_t * led_array_out, uint32_t rap_time);
+	uint16_t wait_ms;   // wait time (ms)
+	int32_t demo_period;	// demo time (ms)
+	uint16_t process_time;	// process time for each step (ms)
+} demo_list_t;
+
+const static demo_list_t demo_list[] = {
+	{ &running_rainbowv_init, &running_rainbowv, 20 ,30000,8},
+	{ &running_rainbow_init, &running_rainbow, 20 ,30000,8},
+	{ &flashing_random_init, &flashing_random, 20,30000,8},
+};
+
+const static int8_t size_of_list = sizeof(demo_list)/sizeof(demo_list[0]);
+////// Define list of demos : end /////
+
+
+static ws2812b_driver_i2s_t i2s;
 
 #define LED_MASK_OK         BSP_LED_0_MASK
 #define LED_MASK_ERROR      BSP_LED_1_MASK
@@ -54,7 +82,6 @@ static          uint16_t m_sample_value_to_send;
 static          uint16_t m_sample_value_expected;
 static          bool     m_error_encountered;
 
-
 static void uart_event_handler(app_uart_evt_t * p_event)
 {
     // This function is required by APP_UART_FIFO_INIT, but we don't need to
@@ -72,7 +99,7 @@ static void init_uart(void)
         .cts_pin_no   = CTS_PIN_NUMBER,
         .flow_control = APP_UART_FLOW_CONTROL_ENABLED,
         .use_parity   = false,
-        .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud38400
+        .baud_rate    = UART_BAUDRATE_BAUDRATE_Baud9600
     };
 
     APP_UART_FIFO_INIT(&comm_params,
@@ -83,6 +110,7 @@ static void init_uart(void)
                        err_code);
     APP_ERROR_CHECK(err_code);
 }
+
 
 
 static void prepare_tx_data(uint32_t * p_buffer, uint16_t number_of_words)
@@ -217,16 +245,31 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
     while(1);
 }
 
+const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
 
 int main(void)
 {
-    uint32_t err_code = NRF_SUCCESS;
-
-    LEDS_CONFIGURE(LED_MASK_OK | LED_MASK_ERROR);
+		i2s_buffer_t i2s_buffer;
+	
+		rgb_led_t led_array[NUM_LEDS];
+	
+		uint32_t current_limit;
+		float dim;
 
     init_uart();
     printf("\r\n"
-           "I2S loopback example\r\n");
+           "i2s_ws2812b_demonstration\r\n");
+
+		uint32_t err_code = NRF_SUCCESS;
+
+    LEDS_CONFIGURE(LED_MASK_OK | LED_MASK_ERROR);
+
+		printf("ws2812b_driver_i2s_init call\r\n");
+		ws2812b_driver_i2s_init(&i2s);
+	
+		printf("alloc_i2s_buffer call\r\n");
+		alloc_i2s_buffer(&i2s_buffer, NUM_LEDS);
+	
 
     nrf_drv_i2s_config_t config = NRF_DRV_I2S_DEFAULT_CONFIG;
     // In Master mode the MCK frequency and the MCK/LRCK ratio should be
@@ -237,26 +280,103 @@ int main(void)
     config.mck_setup = NRF_I2S_MCK_32MDIV21;
     config.ratio     = NRF_I2S_RATIO_96X;
 
-    err_code = nrf_drv_i2s_init(&config, data_handler);
-    APP_ERROR_CHECK(err_code);
+		printf("nrf_drv_i2s_init call\r\n");
+		nrf_drv_i2s_init(&config, data_handler);
+ 
+		LEDS_ON(1 << leds_list[0]);
+		LEDS_ON(1 << leds_list[1]);
+		LEDS_ON(1 << leds_list[2]);
+		LEDS_ON(1 << leds_list[3]);
+	
+		for(;;)
+		{
+			LEDS_INVERT(1 << leds_list[2]);
 
-    for (;;)
-    {
-        memset(m_buffer_rx, 0xCC, sizeof(m_buffer_rx));
+			for(int8_t idemo=0;idemo<size_of_list;idemo++)
+			{
+				printf("demo %d start\r\n",idemo);
+				LEDS_INVERT(1 << leds_list[1]);
+				
+				printf(" function_init\r\n",idemo);
+				demo_list[idemo].function_init();
+				
+				int32_t rest = demo_list[idemo].demo_period;
+				int32_t rap  = 0;
+				int32_t step = demo_list[idemo].wait_ms + demo_list[idemo].process_time;
+				
+				while( rest > 0 )
+				{
+					LEDS_INVERT(1 << leds_list[0]);
 
-        m_blocks_transferred = 0;
 
-        err_code = nrf_drv_i2s_start(m_buffer_rx, m_buffer_tx,
-            I2S_BUFFER_SIZE, 0);
-        APP_ERROR_CHECK(err_code);
+					// animate and set up led_array_work 
+					demo_list[idemo].function_update(led_array,rap);
+					
+					// dim LEDs until current limit 
+					current_limit = CURRENT_LIMIT;
+					ws2812b_driver_current_cap(led_array, NUM_LEDS, current_limit);
 
-        while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
-        {}
-        nrf_drv_i2s_stop();
+					// fade in/out effect
+					if ( (demo_list[idemo].demo_period - rest) < FADE_IN_MS )
+					{
+						dim = (float)0.01+((float)0.99 * ((demo_list[idemo].demo_period - rest)/(float)FADE_IN_MS));
+					}
+					else if ( rest < FADE_IN_MS) 
+					{
+						dim = (float)0.01+((float)0.99 * (rest/(float)FADE_IN_MS));
+					}
+					if ( dim > (float)1.0 ) {
+						dim = 1.0;
+					}
+					
+					ws2812b_driver_dim(led_array, NUM_LEDS, dim);
+					
+					// LED update
+					printf(" xfer\r\n",idemo);
+					ws2812b_driver_xfer(led_array, i2s_buffer, i2s);
+					
+					// delay (LED will be updated this period)
+					printf(" delay\r\n",idemo);
+					nrf_delay_ms(demo_list[idemo].wait_ms);
 
-        LEDS_OFF(LED_MASK_OK | LED_MASK_ERROR);
-        nrf_delay_ms(PAUSE_TIME);
-    }
+					//
+					rest -= step;
+					rap += step;
+					
+					for(;;)
+					{
+					}
+				}
+
+				// blank 3sec. between demos
+				set_blank(led_array,NUM_LEDS);
+				ws2812b_driver_xfer(led_array, i2s_buffer, i2s);
+
+				// delay (LED will be updated this period)
+				nrf_delay_ms(3000);
+			} // idemo
+		} // end-less loop
+
+
+//    for (;;)
+//    {
+//        memset(m_buffer_rx, 0xCC, sizeof(m_buffer_rx));
+
+//        m_blocks_transferred = 0;
+
+//        err_code = nrf_drv_i2s_start(m_buffer_rx, m_buffer_tx,
+//            I2S_BUFFER_SIZE, 0);
+//        APP_ERROR_CHECK(err_code);
+
+//        while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
+//        {}
+//        nrf_drv_i2s_stop();
+
+//        LEDS_OFF(LED_MASK_OK | LED_MASK_ERROR);
+//        nrf_delay_ms(PAUSE_TIME);
+//    }
 }
+
+
 
 /** @} */
