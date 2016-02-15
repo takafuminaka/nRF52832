@@ -18,6 +18,7 @@ void alloc_i2s_buffer(i2s_buffer_t * i2s_buffer, uint16_t num_leds)
 	i2s_buffer->buff = malloc(num_leds * BUF_SIZE_PER_LED);
 	i2s_buffer->length = num_leds * BUF_SIZE_PER_LED;
 	i2s_buffer->tx_buff = malloc(num_leds * BUF_SIZE_PER_LED * 2);
+	i2s_buffer->rx_buff = malloc(num_leds * BUF_SIZE_PER_LED * 2);
 }
 
 
@@ -88,7 +89,7 @@ void i2s_event_handler(uint32_t const * p_data_received,
                          uint32_t       * p_data_to_send,
                          uint16_t         number_of_words)
 {
-    printf(" i2s_event_handler\r\n");
+//    printf(" i2s_event_handler\r\n");
 		if (p_data_to_send != NULL)
 		{
 			i2s_transfer_completed = 1;
@@ -110,13 +111,14 @@ void ws2812b_driver_xfer(rgb_led_t * led_array, i2s_buffer_t i2s_buffer, ws2812b
 		i2s_base.transfer_completed = 0;
 		i2s_transfer_tx_source = (uint32_t *)i2s_base.i2s_buffer.buff;
 	
-		printf("  nrf_drv_i2s_start\r\n");
-//		err_code = nrf_drv_i2s_start(NULL, i2s_base.i2s_buffer.tx_buff , i2s_base.i2s_buffer.length*2/4, 0);
-		printf("  nrf_drv_i2s_start return with status %d\r\n",err_code);
+//		printf("  nrf_drv_i2s_start\r\n");
+		err_code = nrf_drv_i2s_start(i2s_base.i2s_buffer.rx_buff, i2s_base.i2s_buffer.tx_buff , i2s_base.i2s_buffer.length*2/4, 0);
+//		printf("  nrf_drv_i2s_start return with status %d\r\n",err_code);
 
-//    while (i2s_base.transfer_completed == 0)
-//    {
-//		}
+
+    while (i2s_base.transfer_completed == 0)
+    {
+		}
     nrf_drv_i2s_stop();
 }
 

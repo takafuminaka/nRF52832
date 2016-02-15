@@ -343,9 +343,6 @@ int main(void)
 					rest -= step;
 					rap += step;
 					
-					for(;;)
-					{
-					}
 				}
 
 				// blank 3sec. between demos

@@ -33,6 +33,7 @@ typedef struct
 		uint8_t* buff; // data buffer
 		uint16_t length; // buffer size
 		uint32_t* tx_buff; // data buffer
+		uint32_t* rx_buff; // data buffer
 } i2s_buffer_t;
 
 typedef struct
