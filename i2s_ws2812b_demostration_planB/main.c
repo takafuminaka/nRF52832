@@ -46,6 +46,8 @@
 //static uint32_t m_buffer_rx[I2S_BUFFER_SIZE/2];
 static uint32_t m_buffer_tx[I2S_BUFFER_SIZE/2];
 static uint8_t *tx_buffer;
+rgb_led_t * tx_led_array;
+
 
 // Delay time between consecutive I2S transfers performed in the main loop
 // (in milliseconds).
@@ -195,6 +197,9 @@ static void data_handler(uint32_t const * p_data_received,
                          uint32_t       * p_data_to_send,
                          uint16_t         number_of_words)
 {
+		xfer_buffer_t xbuff;
+	
+	
     // Non-NULL value in 'p_data_received' indicates that a new portion of
     // data has been received and should be processed.
 //		printf("data_handler called\r\n");
@@ -206,7 +211,10 @@ static void data_handler(uint32_t const * p_data_received,
 //			printf("data_handler for tx\r\n");
 			if ( m_blocks_bufferred == 0 )
 			{
-				memcpy(p_data_to_send,tx_buffer,number_of_words*4);
+				xbuff.buff = (uint8_t *)p_data_to_send;
+				xbuff.length = number_of_words*4;
+				set_buff(tx_led_array, xbuff);
+//				memcpy(p_data_to_send,tx_buffer,number_of_words*4);
 				m_blocks_bufferred = 1;
 			}
 			else
@@ -253,7 +261,7 @@ const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
 int main(void)
 {
     uint32_t err_code = NRF_SUCCESS;
-		xfer_buffer_t xfer_buffer;
+//		xfer_buffer_t xfer_buffer;
 
 		LEDS_CONFIGURE(LED_MASK_OK | LED_MASK_ERROR);
 
@@ -273,7 +281,7 @@ int main(void)
 		config.alignment = NRF_I2S_ALIGN_LEFT;
 		
 
-		alloc_xfer_buffer(&xfer_buffer, NUM_LEDS);
+//		alloc_xfer_buffer(&xfer_buffer, NUM_LEDS);
 	
     err_code = nrf_drv_i2s_init(&config, data_handler);
     APP_ERROR_CHECK(err_code);
@@ -333,8 +341,9 @@ for (;;)
 					
 					ws2812b_driver_dim(led_array, NUM_LEDS, dim);
 					
-					set_buff(led_array, xfer_buffer);
-          tx_buffer = xfer_buffer.buff;					
+//					set_buff(led_array, xfer_buffer);
+//          tx_buffer = xfer_buffer.buff;					
+					tx_led_array = led_array;
 					
 					// LED update
 //					printf(" xfer\r\n",idemo);
@@ -377,9 +386,11 @@ for (;;)
 				
 				// blank 3sec. between demos
 				set_blank(led_array,NUM_LEDS);
-				set_buff(led_array, xfer_buffer);
-				tx_buffer = xfer_buffer.buff;					
-				
+
+//					set_buff(led_array, xfer_buffer);
+//          tx_buffer = xfer_buffer.buff;					
+					tx_led_array = led_array;
+
 				// LED update
 //				printf(" xfer %d\r\n",idemo);
 				
