@@ -28,7 +28,7 @@ const static rgb_led_t color_list[] = {
 	{MAX_INTENSE3, 0           , 0           }, // Green
 	{MAX_INTENSE3, 0           , MAX_INTENSE3}, // rght green
 	{0           , 0           , MAX_INTENSE3}, // Blue
-	{0           , MAX_INTENSE3, 0           }, // Purple
+	{0           , MAX_INTENSE3, MAX_INTENSE3}, // Purple
 	{0           , MAX_INTENSE3, 0           }, // Red
 };
 

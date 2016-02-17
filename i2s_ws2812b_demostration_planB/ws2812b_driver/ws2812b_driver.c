@@ -7,6 +7,8 @@
  */
 
 #include "ws2812b_driver.h"
+// #include	<stdio.h>
+// #include "app_uart.h"
 
 void alloc_xfer_buffer(xfer_buffer_t * xfer_buffer, uint16_t num_leds)
 {

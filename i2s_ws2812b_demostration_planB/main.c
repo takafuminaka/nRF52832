@@ -43,8 +43,8 @@
 #define UART_RX_BUF_SIZE    1
 
 #define I2S_BUFFER_SIZE     (NUM_LEDS * BUF_SIZE_PER_LED * 2 / 4)
-static uint32_t m_buffer_rx[I2S_BUFFER_SIZE];
-static uint32_t m_buffer_tx[I2S_BUFFER_SIZE];
+//static uint32_t m_buffer_rx[I2S_BUFFER_SIZE/2];
+static uint32_t m_buffer_tx[I2S_BUFFER_SIZE/2];
 static uint8_t *tx_buffer;
 
 // Delay time between consecutive I2S transfers performed in the main loop
@@ -56,6 +56,7 @@ static uint8_t *tx_buffer;
 #define BLOCKS_TO_TRANSFER  1
 
 static volatile uint8_t  m_blocks_transferred     = 0;
+static volatile uint8_t  m_blocks_bufferred     = 0;
 static          uint8_t  m_zero_samples_to_ignore = 0;
 static          uint16_t m_sample_value_to_send;
 static          uint16_t m_sample_value_expected;
@@ -92,100 +93,100 @@ static void init_uart(void)
 }
 
 
-static void prepare_tx_data(uint32_t * p_buffer, uint16_t number_of_words)
-{
-    // These variables will be both zero only at the very beginning of each
-    // transfer, so we use them as the indication that the re-initialization
-    // should be performed.
-    if (m_blocks_transferred == 0 && m_zero_samples_to_ignore == 0)
-    {
-        // Number of initial samples (actually pairs of L/R samples) with zero
-        // values that should be ignored - see the comment in 'check_samples'.
-        m_zero_samples_to_ignore = 2;
-        m_sample_value_to_send   = 0xCAFE;
-        m_sample_value_expected  = 0xCAFE;
-        m_error_encountered      = false;
-    }
-
-    // [each data word contains two 16-bit samples]
-    uint16_t i;
-    for (i = 0; i < number_of_words; ++i)
-    {
-        uint16_t sample_l = m_sample_value_to_send - 1;
-        uint16_t sample_r = m_sample_value_to_send + 1;
-        ++m_sample_value_to_send;
-
-        ((uint16_t *)p_buffer)[2*i]     = sample_l;
-        ((uint16_t *)p_buffer)[2*i + 1] = sample_r;
-    }
-}
-
-
-static bool check_samples(uint32_t const * p_buffer, uint16_t number_of_words)
-{
-    printf("%3u: ", m_blocks_transferred);
-
-    // [each data word contains two 16-bit samples]
-    uint16_t i;
-    for (i = 0; i < number_of_words; ++i)
-    {
-        uint16_t actual_sample_l   = ((uint16_t const *)p_buffer)[2*i];
-        uint16_t actual_sample_r   = ((uint16_t const *)p_buffer)[2*i + 1];
-
-        // Normally a couple of initial samples sent by the I2S peripheral
-        // will have zero values, because it starts to output the clock
-        // before the actual data is fetched by EasyDMA. As we are dealing
-        // with streaming the initial zero samples can be simply ignored.
-        if (m_zero_samples_to_ignore > 0 &&
-            actual_sample_l == 0 &&
-            actual_sample_r == 0)
-        {
-            --m_zero_samples_to_ignore;
-        }
-        else
-        {
-            m_zero_samples_to_ignore = 0;
-
-            uint16_t expected_sample_l = m_sample_value_expected - 1;
-            uint16_t expected_sample_r = m_sample_value_expected + 1;
-            ++m_sample_value_expected;
-
-            if (actual_sample_l != expected_sample_l ||
-                actual_sample_r != expected_sample_r)
-            {
-                printf("%04x/%04x, expected: %04x/%04x\r\n",
-                    actual_sample_l, actual_sample_r,
-                    expected_sample_l, expected_sample_r);
-                return false;
-            }
-        }
-    }
-
-    printf("OK\r\n");
-    return true;
-}
-
-
-static void check_rx_data(uint32_t const * p_buffer, uint16_t number_of_words)
-{
-    ++m_blocks_transferred;
-
-    if (!m_error_encountered)
-    {
-        m_error_encountered = true; // !check_samples(p_buffer, number_of_words);
-    }
-
-//    if (m_error_encountered)
+//static void prepare_tx_data(uint32_t * p_buffer, uint16_t number_of_words)
+//{
+//    // These variables will be both zero only at the very beginning of each
+//    // transfer, so we use them as the indication that the re-initialization
+//    // should be performed.
+//    if (m_blocks_transferred == 0 && m_zero_samples_to_ignore == 0)
 //    {
-//        LEDS_OFF(LED_MASK_OK);
-//        LEDS_INVERT(LED_MASK_ERROR);
+//        // Number of initial samples (actually pairs of L/R samples) with zero
+//        // values that should be ignored - see the comment in 'check_samples'.
+//        m_zero_samples_to_ignore = 2;
+//        m_sample_value_to_send   = 0xCAFE;
+//        m_sample_value_expected  = 0xCAFE;
+//        m_error_encountered      = false;
 //    }
-//    else
+
+//    // [each data word contains two 16-bit samples]
+//    uint16_t i;
+//    for (i = 0; i < number_of_words; ++i)
 //    {
-//        LEDS_OFF(LED_MASK_ERROR);
-//        LEDS_INVERT(LED_MASK_OK);
+//        uint16_t sample_l = m_sample_value_to_send - 1;
+//        uint16_t sample_r = m_sample_value_to_send + 1;
+//        ++m_sample_value_to_send;
+
+//        ((uint16_t *)p_buffer)[2*i]     = sample_l;
+//        ((uint16_t *)p_buffer)[2*i + 1] = sample_r;
 //    }
-}
+//}
+
+
+//static bool check_samples(uint32_t const * p_buffer, uint16_t number_of_words)
+//{
+//    printf("%3u: ", m_blocks_transferred);
+
+//    // [each data word contains two 16-bit samples]
+//    uint16_t i;
+//    for (i = 0; i < number_of_words; ++i)
+//    {
+//        uint16_t actual_sample_l   = ((uint16_t const *)p_buffer)[2*i];
+//        uint16_t actual_sample_r   = ((uint16_t const *)p_buffer)[2*i + 1];
+
+//        // Normally a couple of initial samples sent by the I2S peripheral
+//        // will have zero values, because it starts to output the clock
+//        // before the actual data is fetched by EasyDMA. As we are dealing
+//        // with streaming the initial zero samples can be simply ignored.
+//        if (m_zero_samples_to_ignore > 0 &&
+//            actual_sample_l == 0 &&
+//            actual_sample_r == 0)
+//        {
+//            --m_zero_samples_to_ignore;
+//        }
+//        else
+//        {
+//            m_zero_samples_to_ignore = 0;
+
+//            uint16_t expected_sample_l = m_sample_value_expected - 1;
+//            uint16_t expected_sample_r = m_sample_value_expected + 1;
+//            ++m_sample_value_expected;
+
+//            if (actual_sample_l != expected_sample_l ||
+//                actual_sample_r != expected_sample_r)
+//            {
+//                printf("%04x/%04x, expected: %04x/%04x\r\n",
+//                    actual_sample_l, actual_sample_r,
+//                    expected_sample_l, expected_sample_r);
+//                return false;
+//            }
+//        }
+//    }
+
+//    printf("OK\r\n");
+//    return true;
+//}
+
+
+//static void check_rx_data(uint32_t const * p_buffer, uint16_t number_of_words)
+//{
+//    ++m_blocks_transferred;
+
+//    if (!m_error_encountered)
+//    {
+//        m_error_encountered = true; // !check_samples(p_buffer, number_of_words);
+//    }
+
+////    if (m_error_encountered)
+////    {
+////        LEDS_OFF(LED_MASK_OK);
+////        LEDS_INVERT(LED_MASK_ERROR);
+////    }
+////    else
+////    {
+////        LEDS_OFF(LED_MASK_ERROR);
+////        LEDS_INVERT(LED_MASK_OK);
+////    }
+//}
 
 
 // This is the I2S data handler - all data exchange related to the I2S transfers
@@ -196,24 +197,22 @@ static void data_handler(uint32_t const * p_data_received,
 {
     // Non-NULL value in 'p_data_received' indicates that a new portion of
     // data has been received and should be processed.
-    if (p_data_received != NULL)
-    {
-			++m_blocks_transferred;
-        // In this example we simply check if received data corresponds to what
-        // we send.
-			// printf("check_rx_data\r\n");
-			//check_rx_data(p_data_received, number_of_words);
-    }
+//		printf("data_handler called\r\n");
 
     // Non-NULL value in 'p_data_to_send' indicates that the driver needs
     // a new portion of data to send.
     if (p_data_to_send != NULL)
     {
-        // Here we write the provided buffer with consecutive 16-bit values
-        // in order to be able to check later if they were transmitted properly.
-				// printf("prepare_tx_data\r\n");
-        // prepare_tx_data(p_data_to_send, number_of_words);
+//			printf("data_handler for tx\r\n");
+			if ( m_blocks_bufferred == 0 )
+			{
 				memcpy(p_data_to_send,tx_buffer,number_of_words*4);
+				m_blocks_bufferred = 1;
+			}
+			else
+			{
+				++m_blocks_transferred;
+			}
     }
 }
 
@@ -240,9 +239,9 @@ typedef struct
 } demo_list_t;
 
 const static demo_list_t demo_list[] = {
-	{ &running_rainbowv_init, &running_rainbowv, 20 ,30000,8},
-	{ &running_rainbow_init, &running_rainbow, 20 ,30000,8},
-	{ &flashing_random_init, &flashing_random, 20,30000,8},
+	{ &running_rainbowv_init, &running_rainbowv, 20 ,30000,10},
+	{ &running_rainbow_init, &running_rainbow, 20 ,30000,10},
+	{ &flashing_random_init, &flashing_random, 20,30000,10},
 };
 
 const static int8_t size_of_list = sizeof(demo_list)/sizeof(demo_list[0]);
@@ -270,6 +269,9 @@ int main(void)
     // 15873 Hz (the closest one to 16 kHz that is possible to achieve).
     config.mck_setup = NRF_I2S_MCK_32MDIV10;
     config.ratio     = NRF_I2S_RATIO_32X;
+		config.format    = NRF_I2S_FORMAT_ALIGNED;
+		config.alignment = NRF_I2S_ALIGN_LEFT;
+		
 
 		alloc_xfer_buffer(&xfer_buffer, NUM_LEDS);
 	
@@ -292,15 +294,16 @@ for (;;)
 
 			for(int8_t idemo=0;idemo<size_of_list;idemo++)
 			{
-				printf("demo %d start\r\n",idemo);
+				printf("demo %d start",idemo);
 				LEDS_INVERT(1 << leds_list[1]);
 				
-				printf(" function_init\r\n",idemo);
+//				printf(" function_init %d\r\n",idemo);
 				demo_list[idemo].function_init();
 				
 				int32_t rest = demo_list[idemo].demo_period;
 				int32_t rap  = 0;
 				int32_t step = demo_list[idemo].wait_ms + demo_list[idemo].process_time;
+				int32_t lrap = 0;
 				
 				while( rest > 0 )
 				{
@@ -334,60 +337,73 @@ for (;;)
           tx_buffer = xfer_buffer.buff;					
 					
 					// LED update
-					printf(" xfer\r\n",idemo);
+//					printf(" xfer\r\n",idemo);
 					
 					
 					m_blocks_transferred = 0;
+					m_blocks_bufferred = 0;
 
-					printf("nrf_drv_i2s_start\r\n");
+//					printf("nrf_drv_i2s_start\r\n");
 					
-					err_code = nrf_drv_i2s_start(m_buffer_tx, m_buffer_tx,
+					err_code = nrf_drv_i2s_start(NULL, m_buffer_tx,
 							I2S_BUFFER_SIZE, 0);
 					APP_ERROR_CHECK(err_code);
 
-					while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
-					{}
+//					while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
+//					{}
 
-					printf("success\r\n");
+          // wait for 
+					nrf_delay_us((NUM_LEDS+20) * (24*5/4));
+
+//					printf("success\r\n");
 					nrf_drv_i2s_stop();
 
 					// delay (LED will be updated this period)
-					printf(" delay\r\n",idemo);
-					nrf_delay_ms(demo_list[idemo].wait_ms);
+//					printf(" delay\r\n",idemo);
+						nrf_delay_ms(demo_list[idemo].wait_ms);
 
 					//
 					rest -= step;
 					rap += step;
-					
+
+					if ( (lrap / 1000) != (rap / 1000) ) 
+					{
+						printf(" %3d",rap / 1000);
+						lrap = rap;
+					}
 
 				}
-
+        printf("\r\n");
+				
 				// blank 3sec. between demos
 				set_blank(led_array,NUM_LEDS);
 				set_buff(led_array, xfer_buffer);
 				tx_buffer = xfer_buffer.buff;					
 				
 				// LED update
-				printf(" xfer\r\n",idemo);
+//				printf(" xfer %d\r\n",idemo);
 				
 				
 				m_blocks_transferred = 0;
+				m_blocks_bufferred = 0;
 
-				printf("nrf_drv_i2s_start\r\n");
+//				printf("nrf_drv_i2s_start\r\n");
 				
-				err_code = nrf_drv_i2s_start(m_buffer_tx, m_buffer_tx,
+				err_code = nrf_drv_i2s_start(NULL, m_buffer_tx,
 						I2S_BUFFER_SIZE, 0);
 				APP_ERROR_CHECK(err_code);
 
-				while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
-				{}
+//				while (m_blocks_transferred < BLOCKS_TO_TRANSFER)
+//				{}
+				nrf_delay_us((NUM_LEDS+20) * (24*5/4));
 
-				printf("success\r\n");
+//				printf("success\r\n");
 				nrf_drv_i2s_stop();
 
 
 
 				// delay (LED will be updated this period)
+				printf("blank and delay\r\n");
 				nrf_delay_ms(3000);
 			} // idemo
 
