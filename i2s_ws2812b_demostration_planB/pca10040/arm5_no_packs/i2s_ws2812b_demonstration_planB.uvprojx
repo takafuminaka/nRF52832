@@ -373,7 +373,7 @@
               <MiscControls>--c99</MiscControls>
               <Define>BSP_DEFINES_ONLY NRF52_PAN_53 NRF52_PAN_15 NRF52_PAN_54 NRF52_PAN_20 NRF52_PAN_55 NRF52_PAN_30 NRF52_PAN_58 NRF52_PAN_31 NRF52_PAN_62 NRF52_PAN_36 NRF52_PAN_63 NRF52_PAN_51 NRF52_PAN_64 CONFIG_GPIO_AS_PINRESET BOARD_PCA10040 NRF52_PAN_12 NRF52</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config;..\..\..\..\..\components\drivers_nrf\common;..\..\..\..\..\components\drivers_nrf\config;..\..\..\..\..\components\drivers_nrf\delay;..\..\..\..\..\components\drivers_nrf\hal;..\..\..\..\..\components\drivers_nrf\i2s;..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\components\drivers_nrf\uart;..\..\..\..\..\components\libraries\fifo;..\..\..\..\..\components\libraries\uart;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\toolchain;..\..\..\..\bsp;..\..;..\..\ws2812b_driver</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\components\drivers_nrf\common;..\..\..\..\..\components\drivers_nrf\config;..\..\..\..\..\components\drivers_nrf\delay;..\..\..\..\..\components\drivers_nrf\hal;..\..\..\..\..\components\drivers_nrf\i2s;..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\components\drivers_nrf\uart;..\..\..\..\..\components\libraries\fifo;..\..\..\..\..\components\libraries\uart;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\toolchain;..\..\..\..\bsp;..\..;..\..\i2s_ws2812b_drive;..\..\ws2812b_drive</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -517,9 +517,14 @@
           <GroupName>ws2812b_driver</GroupName>
           <Files>
             <File>
-              <FileName>ws2812b_driver.c</FileName>
+              <FileName>i2s_ws2812b_drive.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\ws2812b_driver\ws2812b_driver.c</FilePath>
+              <FilePath>..\..\i2s_ws2812b_drive\i2s_ws2812b_drive.c</FilePath>
+            </File>
+            <File>
+              <FileName>ws2812b_drive.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\ws2812b_drive\ws2812b_drive.c</FilePath>
             </File>
           </Files>
         </Group>

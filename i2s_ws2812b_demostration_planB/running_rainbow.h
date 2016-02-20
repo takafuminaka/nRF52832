@@ -10,10 +10,13 @@
 #define RUNNING_RAINBOW_H__
 
 #include	"project.h"
-#include "ws2812b_driver.h"
+#include	"ws2812b_drive.h"
 #include  "stdlib.h"
 
-void running_rainbow_init(void);
+void running_rainbow_init(uint16_t);
+
+void running_rainbow_uninit(void);
+
 void running_rainbow(rgb_led_t * led_array, uint32_t rap_time);
 
 #endif // RUNNING_RAINBOW_H__

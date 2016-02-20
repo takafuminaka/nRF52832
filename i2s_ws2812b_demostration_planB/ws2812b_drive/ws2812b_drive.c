@@ -6,7 +6,7 @@
  *
  */
 
-#include "ws2812b_driver.h"
+#include "ws2812b_drive.h"
 // #include	<stdio.h>
 // #include "app_uart.h"
 
@@ -24,7 +24,7 @@ void ws2812b_drive_set_blank(rgb_led_t * rgb_led, uint16_t num_leds)
 
 void ws2812b_drive_current_cap(rgb_led_t * led_array, uint16_t num_leds, uint32_t limit)
 {
-	uint32_t sum0 = ws2812b_driver_calc_current(led_array, num_leds);
+	uint32_t sum0 = ws2812b_drive_calc_current(led_array, num_leds);
 	if ( sum0 > limit ) {
 		// fact = (limit - num_leds) / (sum0 - num_leds);
 		int32_t factn = limit - num_leds;

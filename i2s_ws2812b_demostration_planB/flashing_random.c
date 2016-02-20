@@ -9,7 +9,7 @@
 
 #include	"flashing_random.h"
 #include	"project.h"
-#include "ws2812b_driver.h"
+#include	"ws2812b_drive.h"
 #include  "stdlib.h"
 
 #define STEP_SRIDE1					(-(ROW_SIZE+1))
@@ -18,13 +18,19 @@
 #define	PRAB_FLASH					(1000)
 
 
-static rgb_led_t led_array_base[NUM_LEDS];				// array for base color
-static rgb_led_t led_array_flash1[NUM_LEDS]; // array for flash right-up to left-down
-static rgb_led_t led_array_flash2[NUM_LEDS]; // array for flash left-up to right-down
-static rgb_led_t led_array_work[NUM_LEDS]; // array for flash left-up to right-down
+static rgb_led_t *led_array_base;				// array for base color
+static rgb_led_t *led_array_flash1; // array for flash right-up to left-down
+static rgb_led_t *led_array_flash2; // array for flash left-up to right-down
+static rgb_led_t *led_array_work; // array for flash left-up to right-down
 
-void flashing_random_init()
+void flashing_random_init(uint16_t num_leds)
 {
+		// allocate buffers
+		led_array_base		= malloc(num_leds * sizeof(rgb_led_t));
+		led_array_flash1	= malloc(num_leds * sizeof(rgb_led_t));
+		led_array_flash2	= malloc(num_leds * sizeof(rgb_led_t));
+		led_array_work		= malloc(num_leds * sizeof(rgb_led_t));
+
 		// initialize led_array (base color array)
 		for(uint16_t i=0;i<NUM_LEDS;i++)
 		{
@@ -45,6 +51,14 @@ void flashing_random_init()
 				led_array_flash2[i].red   = 0;
 				led_array_flash2[i].blue  = 0;
 		}
+}
+
+void flashing_random_uninit()
+{
+		free(led_array_base);
+		free(led_array_flash1);
+		free(led_array_flash2);
+		free(led_array_work);
 }
 
 void flashing_random(rgb_led_t * led_array_out, uint32_t rap_time)

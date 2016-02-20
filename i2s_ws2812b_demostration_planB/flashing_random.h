@@ -10,10 +10,13 @@
 #define FLASHING_RANDOM_H__
 
 #include	"project.h"
-#include "ws2812b_driver.h"
-#include  "stdlib.h"
+#include	"ws2812b_drive.h"
+#include 	"stdlib.h"
 
-void flashing_random_init(void);
+void flashing_random_init(uint16_t num_leds);
+
+void flashing_random_uninit(void);
+
 void flashing_random(rgb_led_t * led_array, uint32_t rap_time);
 
 #endif // FLASHING_RANDOM_H__
